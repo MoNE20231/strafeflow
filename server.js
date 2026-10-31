@@ -83,7 +83,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
     res.redirect('/?error=server_error');
   }
 });
-    const { code } = req.query;
+const { code } = req.query;
     if (!code) return res.redirect('/?error=no_code');
 
     try {
@@ -114,13 +114,20 @@ app.get('/api/auth/discord/callback', async (req, res) => {
             avatar: avatarUrl
         };
 
-        res.redirect('/');
+        // Oturumu bellekten çereze yazıp yönlendirmeyi garantiye alıyoruz
+        req.session.save((saveErr) => {
+            if (saveErr) {
+                console.error('Session kaydetme hatası:', saveErr);
+                return res.redirect('/?error=session_save_failed');
+            }
+            res.redirect('/');
+        });
+
     } catch (err) {
         console.error('Discord Auth Hatası:', err?.response?.data || err.message);
         res.redirect('/?error=auth_failed');
     }
 });
-
 app.get('/api/me', (req, res) => {
     res.json({ user: req.session.user || null });
 });
@@ -160,4 +167,28 @@ app.get('/api/leaderboard', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`StrafeFlow Sunucusu Çalışıyor: http://localhost:${PORT}`);
+});
+// Ön yüzün oturum durumunu sorguladığı endpoint
+app.get('/api/me', (req, res) => {
+  if (req.session && req.session.user) {
+    res.json({ loggedIn: true, user: req.session.user });
+  } else {
+    res.json({ loggedIn: false });
+  }
+});
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+
+    if (data.loggedIn) {
+      // "Discord Bağla" butonunu gizle ve profil bilgisini göster
+      const connectBtn = document.getElementById('discord-connect-btn'); // HTML'deki buton ID'si
+      if (connectBtn) connectBtn.style.display = 'none';
+
+      console.log('Giriş yapan kullanıcı:', data.user.username);
+    }
+  } catch (err) {
+    console.error('Oturum kontrol hatası:', err);
+  }
 });
