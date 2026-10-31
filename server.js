@@ -20,10 +20,15 @@ app.use(session({
 
 let globalLeaderboard = [];
 
+// Discord Giriş Başlatma (Doğrudan Discord'a Yönlendirir)
 app.get('/api/auth/discord', (req, res) => {
-    const redirectUri = encodeURIComponent(process.env.REDIRECT_URI);
-    const url = `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=identify`;
-    res.redirect(url);
+  const clientId = process.env.CLIENT_ID;
+  const redirectUri = encodeURIComponent(process.env.REDIRECT_URI);
+  const scope = encodeURIComponent('identify email');
+  
+  const discordUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
+  
+  res.redirect(discordUrl);
 });
 
 app.get('/api/auth/discord/callback', async (req, res) => {
