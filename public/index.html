@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StrafeFlow - FiveM NUI Arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap');
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #020203;
+            color: #fff;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        /* Cyberpunk Grid Background Animation */
+        .cyber-bg {
+            background: radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.15) 0%, rgba(2, 2, 3, 1) 75%),
+                        linear-gradient(to right, rgba(168, 85, 247, 0.04) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(168, 85, 247, 0.04) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+        }
+
+        .neon-glow-purple {
+            box-shadow: 0 0 35px rgba(168, 85, 247, 0.4), inset 0 0 20px rgba(168, 85, 247, 0.2);
+            border: 2px solid rgba(192, 132, 252, 0.6);
+        }
+
+        .neon-glow-pink {
+            box-shadow: 0 0 40px rgba(236, 72, 153, 0.8);
+        }
+
+        .key-active {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%) !important;
+            color: #000 !important;
+            border-color: #f472b6 !important;
+            box-shadow: 0 0 30px rgba(236, 72, 153, 1), inset 0 0 10px #fff;
+            transform: scale(0.9) translateY(2px);
+        }
+
+        .shake-effect {
+            animation: shake 0.12s linear infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-8px, 5px) rotate(-1deg); }
+            40% { transform: translate(8px, -5px) rotate(1deg); }
+            60% { transform: translate(-5px, -8px) rotate(0deg); }
+            80% { transform: translate(5px, 8px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        /* RPM Bar Fill */
+        .rpm-bar {
+            transition: width 0.1s ease-out;
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(10, 10, 15, 0.8); }
+        ::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 2px; }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col p-5 cyber-bg relative">
+
+    <!-- ARKA PLAN EFEKT IŞIKLARI -->
+    <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-pink-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <!-- ÜST BAR: FIVEM STYLE HUD HEADER -->
+    <header class="flex justify-between items-center bg-black/80 backdrop-blur-xl border-b-2 border-purple-500/60 p-4 rounded-2xl neon-glow-purple z-10">
+        <!-- Profile Box -->
+        <div id="auth-box" class="flex items-center gap-4">
+            <button onclick="location.href='/api/auth/discord'" class="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-orbitron font-black text-xs px-6 py-3 rounded-xl tracking-wider uppercase flex items-center gap-2 shadow-lg shadow-purple-600/40 border border-purple-400/40 transition-all hover:scale-105 active:scale-95">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                DISCORD İLE BAGLAN
+            </button>
+        </div>
+
+        <!-- Middle Telemetry (FPS / MS) -->
+        <div class="hidden md:flex items-center gap-6 font-orbitron text-xs text-zinc-400 border-x border-zinc-800 px-8">
+            <div>PING: <span class="text-green-400 font-bold">12 MS</span></div>
+            <div>FPS: <span class="text-purple-400 font-bold" id="fps-val">60</span></div>
+            <div>STATUS: <span id="shift-status" class="text-red-500 font-bold">STANDBY</span></div>
+        </div>
+
+        <!-- Score Dashboard -->
+        <div class="text-right">
+            <div class="text-[10px] font-orbitron tracking-widest text-pink-500 uppercase">TOTAL SCORE</div>
+            <div id="score-display" class="text-4xl font-orbitron font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.6)]">0000</div>
+        </div>
+    </header>
+
+    <!-- MAIN GRID CONTAINER -->
+    <div class="flex-1 grid grid-cols-12 gap-6 my-4 z-10 overflow-hidden">
+        
+        <!-- LEFT / CENTER: STRAFE ARENA (8 COLS) -->
+        <main class="col-span-12 lg:col-span-8 bg-black/60 backdrop-blur-2xl border border-purple-900/40 rounded-3xl relative flex flex-col justify-center items-center overflow-hidden neon-glow-purple">
+            
+            <!-- RPM / STREAK ACCELERATION BAR -->
+            <div class="absolute top-6 w-3/4 max-w-md bg-zinc-900/90 h-3 rounded-full overflow-hidden p-0.5 border border-purple-500/30">
+                <div id="rpm-bar" class="rpm-bar h-full bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-400 rounded-full w-0 shadow-[0_0_12px_#ec4899]"></div>
+            </div>
+
+            <!-- MAIN SPEEDOMETER / STRAFE CIRCLE -->
+            <div id="main-circle" class="w-96 h-96 rounded-full border-4 border-purple-500/40 bg-purple-950/10 flex justify-center items-center relative transition-all duration-150">
+                
+                <!-- Crosshair Reference Lines -->
+                <div class="w-full h-[1px] bg-purple-500/20 absolute"></div>
+                <div class="h-full w-[1px] bg-purple-500/20 absolute"></div>
+                <div class="w-4 h-4 rounded-full border border-purple-400/50 absolute"></div>
+
+                <!-- TARGET INDICATOR DOT -->
+                <div id="target-dot" class="w-9 h-9 bg-gradient-to-tr from-purple-400 to-pink-500 rounded-full absolute transition-all duration-75 ease-out neon-glow-pink flex items-center justify-center">
+                    <div class="w-3 h-3 rounded-full bg-black"></div>
+                </div>
+
+                <!-- DYNAMIC COMBO FEEDBACK TEXT -->
+                <div id="feedback-text" class="absolute -top-16 text-lg font-orbitron font-black tracking-widest text-purple-300 opacity-0 transition-all transform translate-y-3">
+                    +15 PERFECT FLOW
+                </div>
+            </div>
+
+            <!-- WASD HUD (OUTSIDE CIRCLE) -->
+            <div class="absolute bottom-6 flex flex-col items-center gap-2">
+                <div id="key-W" class="w-14 h-14 border-2 border-purple-900/60 bg-zinc-950/90 rounded-2xl flex items-center justify-center font-orbitron font-black text-zinc-300 text-xl shadow-lg transition-all">W</div>
+                <div class="flex gap-3">
+                    <div id="key-A" class="w-14 h-14 border-2 border-purple-900/60 bg-zinc-950/90 rounded-2xl flex items-center justify-center font-orbitron font-black text-zinc-300 text-xl shadow-lg transition-all">A</div>
+                    <div id="key-S" class="w-14 h-14 border-2 border-purple-900/60 bg-zinc-950/90 rounded-2xl flex items-center justify-center font-orbitron font-black text-zinc-300 text-xl shadow-lg transition-all">S</div>
+                    <div id="key-D" class="w-14 h-14 border-2 border-purple-900/60 bg-zinc-950/90 rounded-2xl flex items-center justify-center font-orbitron font-black text-zinc-300 text-xl shadow-lg transition-all">D</div>
+                </div>
+                <div class="text-[11px] font-orbitron font-bold text-purple-400/80 tracking-widest uppercase mt-2">HOLD L-SHIFT TO ENGAGE STRAFE</div>
+            </div>
+        </main>
+
+        <!-- RIGHT: AGGRESSIVE LEADERBOARD (4 COLS) -->
+        <aside class="col-span-12 lg:col-span-4 bg-black/70 backdrop-blur-2xl border border-purple-500/40 rounded-3xl p-5 flex flex-col neon-glow-purple">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-purple-900/40">
+                <h3 class="text-sm font-orbitron font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-widest uppercase flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-pink-500 animate-ping"></span>
+                    TOP STRAFERS
+                </h3>
+                <span class="text-[10px] font-orbitron bg-purple-950/80 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full">GLOBAL</span>
+            </div>
+
+            <!-- LEADERBOARD CARDS CONTAINER -->
+            <div id="leaderboard" class="space-y-3 overflow-y-auto flex-1 pr-1">
+                <div class="text-xs text-zinc-600 text-center py-6">Yükleniyor...</div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- AUDIO & LOGIC ENGINE -->
+    <script>
+        // Web Audio API Synthesizer (Ses Efektleri İçin)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playBeep(freq = 440, type = 'sine', duration = 0.08) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        let score = 0;
+        let streak = 0;
+        let isAuth = false;
+        let lastAngle = null;
+        const keys = { ShiftLeft: false, KeyW: false, KeyA: false, KeyS: false, KeyD: false };
+
+        // FPS Sayacı
+        let lastFrameTime = performance.now();
+        let frameCount = 0;
+        function updateFPS() {
+            const now = performance.now();
+            frameCount++;
+            if (now - lastFrameTime >= 1000) {
+                document.getElementById('fps-val').innerText = frameCount;
+                frameCount = 0;
+                lastFrameTime = now;
+            }
+            requestAnimationFrame(updateFPS);
+        }
+        requestAnimationFrame(updateFPS);
+
+        // Discord Oturum Kontrolü
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/me');
+                const data = await res.json();
+                if (data.user) {
+                    isAuth = true;
+                    document.getElementById('auth-box').innerHTML = `
+                        <img src="${data.user.avatar}" class="w-11 h-11 rounded-xl border-2 border-pink-500 object-cover shadow-[0_0_15px_#ec4899]">
+                        <div>
+                            <div class="font-orbitron font-black text-sm text-zinc-100">${data.user.username}</div>
+                            <div class="text-[10px] text-green-400 font-bold tracking-wider">CONNECTED ✓</div>
+                        </div>
+                    `;
+                }
+            } catch(e){}
+        }
+
+        // Key Listeners
+        window.addEventListener('keydown', (e) => {
+            if (e.code in keys && !keys[e.code]) {
+                keys[e.code] = true;
+                if (e.code === 'ShiftLeft') updateShiftStatus(true);
+                else updateKeyVisual(e.code, true);
+
+                if (keys.ShiftLeft && e.code !== 'ShiftLeft') processStrafe(e.code);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code in keys) {
+                keys[e.code] = false;
+                if (e.code === 'ShiftLeft') updateShiftStatus(false);
+                else updateKeyVisual(e.code, false);
+            }
+        });
+
+        function updateShiftStatus(active) {
+            const el = document.getElementById('shift-status');
+            if (active) {
+                el.innerText = 'ENGAGED';
+                el.className = 'text-green-400 font-bold';
+            } else {
+                el.innerText = 'STANDBY';
+                el.className = 'text-red-500 font-bold';
+                streak = 0;
+                updateRPMBar();
+            }
+        }
+
+        function updateKeyVisual(code, active) {
+            const k = code.replace('Key', '');
+            const el = document.getElementById(`key-${k}`);
+            if (el) {
+                if (active) el.classList.add('key-active');
+                else el.classList.remove('key-active');
+            }
+        }
+
+        function processStrafe(code) {
+            const dot = document.getElementById('target-dot');
+            const mainCircle = document.getElementById('main-circle');
+            let currentAngle = 0;
+
+            if (code === 'KeyD') { dot.style.transform = 'translateX(130px)'; currentAngle = 0; }
+            if (code === 'KeyS') { dot.style.transform = 'translateY(130px)'; currentAngle = 90; }
+            if (code === 'KeyA') { dot.style.transform = 'translateX(-130px)'; currentAngle = 180; }
+            if (code === 'KeyW') { dot.style.transform = 'translateY(-130px)'; currentAngle = 270; }
+
+            // Rotasyonel Strafe Analizi
+            if (lastAngle !== null) {
+                let diff = Math.abs(currentAngle - lastAngle);
+                if (diff === 90 || diff === 270) {
+                    score += 15;
+                    streak = Math.min(100, streak + 5);
+                    playBeep(600 + streak * 4, 'sine', 0.05); // Ses frekansı kombo arttıkça yükselir
+                    showFeedback('+15 PERFECT FLOW', 'text-pink-400');
+                    mainCircle.style.borderColor = 'rgba(236, 72, 153, 0.9)';
+                } else {
+                    score = Math.max(0, score - 10);
+                    streak = 0;
+                    playBeep(180, 'sawtooth', 0.15); // Hata sesi
+                    showFeedback('-10 WRONG DIRECTION', 'text-red-500');
+                    mainCircle.classList.add('shake-effect');
+                    mainCircle.style.borderColor = 'rgba(239, 68, 68, 0.9)';
+                    setTimeout(() => mainCircle.classList.remove('shake-effect'), 150);
+                }
+            } else {
+                score += 5;
+            }
+
+            lastAngle = currentAngle;
+            updateRPMBar();
+            document.getElementById('score-display').innerText = String(score).padStart(4, '0');
+
+            if (isAuth) sendScore();
+        }
+
+        function updateRPMBar() {
+            document.getElementById('rpm-bar').style.width = `${streak}%`;
+        }
+
+        function showFeedback(text, colorClass) {
+            const fb = document.getElementById('feedback-text');
+            fb.innerText = text;
+            fb.className = `absolute -top-16 text-lg font-orbitron font-black tracking-widest opacity-100 transition-all transform translate-y-0 ${colorClass}`;
+            setTimeout(() => fb.classList.add('opacity-0', 'translate-y-3'), 200);
+        }
+
+        let saveTimer;
+        function sendScore() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(async () => {
+                await fetch('/api/score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ score })
+                });
+                loadLeaderboard();
+            }, 300);
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch('/api/leaderboard');
+                const list = await res.json();
+                const box = document.getElementById('leaderboard');
+                if (!list.length) {
+                    box.innerHTML = '<div class="text-xs text-zinc-600 text-center py-6">Kayıtlı oyuncu yok.</div>';
+                    return;
+                }
+                box.innerHTML = list.map((item, index) => {
+                    const crowns = ['🥇', '🥈', '🥉'];
+                    return `
+                        <div class="flex justify-between items-center bg-zinc-950/80 border border-purple-900/50 p-3 rounded-2xl text-xs transition-all hover:border-pink-500/60 hover:scale-[1.02]">
+                            <div class="flex items-center gap-3">
+                                <span class="font-orbitron font-black text-sm w-5 text-center">
+                                    ${crowns[index] || `<span class="text-zinc-600">#${index + 1}</span>`}
+                                </span>
+                                <img src="${item.avatar}" class="w-8 h-8 rounded-xl border border-purple-500/50 object-cover shadow-sm">
+                                <span class="font-bold text-zinc-100 truncate max-w-[110px]">${item.username}</span>
+                            </div>
+                            <span class="font-orbitron font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 text-sm">${item.score} P</span>
+                        </div>
+                    `;
+                }).join('');
+            } catch(e){}
+        }
+
+        checkAuth();
+        loadLeaderboard();
+    </script>
+</body>
+</html>
