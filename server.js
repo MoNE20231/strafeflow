@@ -10,29 +10,30 @@ const PORT = process.env.PORT || 10000;
 // Render HTTPS yönlendirmeleri için trust proxy
 app.set('trust proxy', 1);
 
-// Session yapılandırması
+// Session (Oturum) Yapılandırması
 app.use(session({
   secret: process.env.SESSION_SECRET || 'strafeflow_secret_key',
   resave: false,
   saveUninitialized: false,
   proxy: true,
   cookie: {
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000
+    secure: true,       // Render HTTPS ortamı için şart
+    sameSite: 'none',   // Cross-site (Discord'dan dönüş) çerez engelini aşmak için 'none'
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 1 Gün
   }
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// 1. Login başlatma
+// 1. DISCORD LOGIN BAŞLANGIÇ ROTASI
 app.get('/api/auth/discord', (req, res) => {
   const discordUrl = `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=code&scope=identify`;
   res.redirect(discordUrl);
 });
 
-// 2. Discord Callback
+// 2. DISCORD CALLBACK (GERİ DÖNÜŞ) ROTASI
 app.get('/api/auth/discord/callback', async (req, res) => {
   const { code } = req.query;
   if (!code) return res.redirect('/?error=no_code');
@@ -65,6 +66,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
       avatar: avatarUrl
     };
 
+    // Oturum verisini kaydet ve ana sayfaya yönlendir
     req.session.save((saveErr) => {
       if (saveErr) {
         console.error('Session kaydetme hatası:', saveErr);
@@ -79,7 +81,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
   }
 });
 
-// 3. Frontend için Kullanıcı Bilgisi Sorgulama
+// 3. FRONTEND İÇİN OTURUM SORGULAMA ROTASI
 app.get('/api/me', (req, res) => {
   if (req.session && req.session.user) {
     res.json({ loggedIn: true, user: req.session.user });
@@ -88,7 +90,7 @@ app.get('/api/me', (req, res) => {
   }
 });
 
-// 4. Logout
+// 4. ÇIKIŞ YAP (LOGOUT) ROTASI
 app.get('/api/auth/logout', (req, res) => {
   req.session.destroy(() => {
     res.redirect('/');
