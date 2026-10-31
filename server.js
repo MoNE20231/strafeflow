@@ -7,33 +7,32 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Render/HTTPS için proxy güveni
+// Render HTTPS yönlendirmeleri için trust proxy
 app.set('trust proxy', 1);
 
-// Express Session Ayarları
+// Session yapılandırması
 app.use(session({
   secret: process.env.SESSION_SECRET || 'strafeflow_secret_key',
   resave: false,
   saveUninitialized: false,
   proxy: true,
   cookie: {
-    secure: true,      // Render HTTPS ortamı için
-    sameSite: 'lax',   // Yönlendirmede çerezin korunması için
-    maxAge: 24 * 60 * 60 * 1000 // 1 Gün
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
-// Statik dosyaları servis et (public veya mevcut dizin)
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// 1. DISCORD LOGIN BAŞLANGIÇ ROTASI
+// 1. Login başlatma
 app.get('/api/auth/discord', (req, res) => {
   const discordUrl = `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&response_type=code&scope=identify`;
   res.redirect(discordUrl);
 });
 
-// 2. DISCORD CALLBACK (GERİ DÖNÜŞ) ROTASI
+// 2. Discord Callback
 app.get('/api/auth/discord/callback', async (req, res) => {
   const { code } = req.query;
   if (!code) return res.redirect('/?error=no_code');
@@ -66,7 +65,6 @@ app.get('/api/auth/discord/callback', async (req, res) => {
       avatar: avatarUrl
     };
 
-    // Session'ın çereze yazılmasını garantileyip yönlendiriyoruz
     req.session.save((saveErr) => {
       if (saveErr) {
         console.error('Session kaydetme hatası:', saveErr);
@@ -81,7 +79,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
   }
 });
 
-// 3. KULLANICI BİLGİSİ SORGULAMA ROTASI (FRONTEND İÇİN)
+// 3. Frontend için Kullanıcı Bilgisi Sorgulama
 app.get('/api/me', (req, res) => {
   if (req.session && req.session.user) {
     res.json({ loggedIn: true, user: req.session.user });
@@ -90,14 +88,13 @@ app.get('/api/me', (req, res) => {
   }
 });
 
-// 4. ÇIKIŞ YAP (LOGOUT) ROTASI
+// 4. Logout
 app.get('/api/auth/logout', (req, res) => {
   req.session.destroy(() => {
     res.redirect('/');
   });
 });
 
-// Sunucuyu Başlat
 app.listen(PORT, () => {
   console.log(`StrafeFlow Sunucusu Çalışıyor: http://localhost:${PORT}`);
 });
