@@ -11,11 +11,18 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.set('trust proxy', 1);
+
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'strafe_secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 }
+  secret: process.env.SESSION_SECRET || 'strafe_secret',
+  resave: false,
+  saveUninitialized: false,
+  proxy: true,
+  cookie: {
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000
+  }
 }));
 
 let globalLeaderboard = [];
@@ -32,6 +39,50 @@ app.get('/api/auth/discord', (req, res) => {
 });
 
 app.get('/api/auth/discord/callback', async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) return res.redirect('/?error=no_code');
+
+    // 1. Discord'dan Token Al
+    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: process.env.REDIRECT_URI,
+      }),
+    });
+
+    const tokenData = await tokenResponse.json();
+    if (!tokenData.access_token) return res.redirect('/?error=token_failed');
+
+    // 2. Kullanıcı Bilgilerini Çek
+    const userResponse = await fetch('https://discord.com/api/users/@me', {
+      headers: { authorization: `${tokenData.token_type} ${tokenData.access_token}` },
+    });
+
+    const userData = await userResponse.json();
+
+    // 3. Oturumu Kaydet ve Yönlendir
+    req.session.user = userData;
+
+    // Oturumun tarayıcıya çerez olarak yazılmasını garantileyip öyle yönlendiriyoruz:
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session Save Error:", err);
+        return res.redirect('/?error=session_save_failed');
+      }
+      res.redirect('/');
+    });
+
+  } catch (error) {
+    console.error("Auth Error:", error);
+    res.redirect('/?error=server_error');
+  }
+});
     const { code } = req.query;
     if (!code) return res.redirect('/?error=no_code');
 
